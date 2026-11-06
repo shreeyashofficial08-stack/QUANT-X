@@ -506,18 +506,36 @@ function App() {
   const chartInstanceRef = useRef<any>(null)
 
   const loadOverview = async () => {
-    try {
-      const [status, catalog, forex] = await Promise.all([
-        fetchJson<{ status: string; markets: Record<string, MarketStatus>; warning?: string }>(`${API_URL}/api/market-status`),
-        fetchJson<MarketCatalog>(`${API_URL}/api/market-overview`),
-        fetchJson<any>(`${API_URL}/api/forex/dashboard`),
-      ])
-      setMarketStatus(status)
-      setMarketCatalog(catalog)
-      if (catalog.watchlist?.length) setWatchlistSymbols(catalog.watchlist)
-      setForexDashboard(forex)
-    } catch {
-      setMarketStatus({ status: 'DISCONNECTED', markets: {}, warning: 'Unable to reach the market API.' })
+    const [statusResult, catalogResult, forexResult] = await Promise.allSettled([
+      fetchJson<{ status: string; markets: Record<string, MarketStatus>; warning?: string }>(`${API_URL}/api/market-status`),
+      fetchJson<MarketCatalog>(`${API_URL}/api/market-overview`),
+      fetchJson<any>(`${API_URL}/api/forex/dashboard`),
+    ])
+
+    if (statusResult.status === 'fulfilled') {
+      setMarketStatus(statusResult.value)
+    } else {
+      setMarketStatus((previous) => ({
+        ...previous,
+        status: 'DEGRADED',
+        warning: 'Provider status is temporarily unavailable; market catalogue may still load.',
+      }))
+      console.error('Provider status request failed:', statusResult.reason)
+    }
+
+    if (catalogResult.status === 'fulfilled' && Array.isArray(catalogResult.value.markets)) {
+      setMarketCatalog(catalogResult.value)
+      if (catalogResult.value.watchlist?.length) setWatchlistSymbols(catalogResult.value.watchlist)
+    } else if (catalogResult.status === 'rejected') {
+      console.error('Market catalogue request failed:', catalogResult.reason)
+    } else {
+      console.error('Market catalogue returned an unexpected response:', catalogResult.value)
+    }
+
+    if (forexResult.status === 'fulfilled') {
+      setForexDashboard(forexResult.value)
+    } else {
+      console.error('Forex dashboard request failed:', forexResult.reason)
     }
   }
 
