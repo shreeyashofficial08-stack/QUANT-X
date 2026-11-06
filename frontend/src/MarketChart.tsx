@@ -1,0 +1,10 @@
+import {useEffect,useRef,useState} from 'react'
+import {init,dispose} from 'klinecharts'
+type Candle={timestamp:string;open:number;high:number;low:number;close:number;volume:number}
+const API=import.meta.env.VITE_API_URL||'http://localhost:8000'
+export default function MarketChart({market,symbol}:{market:string;symbol:string}){
+ const host=useRef<HTMLDivElement>(null);const chart=useRef<ReturnType<typeof init>|null>(null);const [period,setPeriod]=useState('1day');const [message,setMessage]=useState('Loading provider history…')
+ useEffect(()=>{if(!host.current)return;chart.current=init(host.current);chart.current?.setStyles('dark');chart.current?.createIndicator('MA');chart.current?.createIndicator('VOL');return()=>{if(host.current)dispose(host.current);chart.current=null}},[])
+ useEffect(()=>{let active=true;fetch(`${API}/api/history/${market}/${encodeURIComponent(symbol)}?interval=${period}&outputsize=150`).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.detail||'History unavailable');return d}).then((d:{data:Candle[]})=>{if(!active||!chart.current)return;chart.current.applyNewData(d.data.map(c=>({timestamp:new Date(c.timestamp).getTime(),open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume})));setMessage(d.data.length?`${d.data.length} candles · Provider history`:'No candles returned')}).catch(e=>{if(active)setMessage(e instanceof Error?e.message:'History unavailable')});return()=>{active=false}},[market,symbol,period])
+ return <section className="panel terminal-chart"><div className="panel-header"><div><div className="panel-eyebrow">MARKET CHART</div><h3>{symbol} <span className="chart-market">{market}</span></h3></div><select aria-label="Timeframe" value={period} onChange={e=>setPeriod(e.target.value)}><option value="1min">1 minute</option><option value="5min">5 minutes</option><option value="15min">15 minutes</option><option value="1h">1 hour</option><option value="1day">1 day</option><option value="1week">1 week</option></select></div><div ref={host} className="kline-host"/><div className="chart-status">{message}</div></section>
+}

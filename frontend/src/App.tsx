@@ -1,225 +1,49 @@
-
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import MarketChart from './MarketChart'
 
-const stocks = [
-  { symbol: 'RELIANCE', name: 'Reliance Industries', price: '1,456.80', change: '+2.45%', positive: true },
-  { symbol: 'TCS', name: 'Tata Consultancy', price: '3,842.50', change: '+1.32%', positive: true },
-  { symbol: 'HDFCBANK', name: 'HDFC Bank', price: '1,682.20', change: '-0.84%', positive: false },
-  { symbol: 'INFY', name: 'Infosys Limited', price: '1,512.60', change: '+1.76%', positive: true },
-  { symbol: 'ICICIBANK', name: 'ICICI Bank', price: '1,245.30', change: '-0.32%', positive: false },
-]
-
-const usStocks = [
-  { symbol: 'AAPL', name: 'Apple Inc.', price: '269.40', change: '+1.82%', positive: true },
-  { symbol: 'NVDA', name: 'NVIDIA Corp.', price: '198.60', change: '+3.24%', positive: true },
-  { symbol: 'MSFT', name: 'Microsoft', price: '521.30', change: '-0.62%', positive: false },
-  { symbol: 'TSLA', name: 'Tesla Inc.', price: '442.10', change: '+2.15%', positive: true },
-  { symbol: 'AMZN', name: 'Amazon', price: '228.75', change: '+0.91%', positive: true },
-]
-
-const chartValues = [36, 33, 39, 31, 35, 27, 32, 25, 30, 21, 25, 18, 24, 15, 19, 12, 17, 9, 13, 5, 10, 3, 8, 1]
-
-function App() {
-  const [market, setMarket] = useState('INDIA')
-  const [activeNav, setActiveNav] = useState('Overview')
-  const [period, setPeriod] = useState('1D')
-  const [search, setSearch] = useState('')
-
-  const currentStocks = market === 'INDIA' ? stocks : usStocks
-  const filteredStocks = currentStocks.filter(stock =>
-    stock.symbol.toLowerCase().includes(search.toLowerCase()) ||
-    stock.name.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const chartPoints = chartValues.map((value, index) =>
-    `${index * 40},${value * 5 + 20}`
-  ).join(' ')
-
-  const navItems = [
-    { name: 'Overview', icon: '◫' },
-    { name: 'Markets', icon: '▥' },
-    { name: 'AI Signals', icon: '✳' },
-    { name: 'Strategies', icon: '⌘' },
-    { name: 'Backtesting', icon: '◷' },
-    { name: 'Paper Trading', icon: '⇄' },
-    { name: 'Portfolio', icon: '◉' },
-  ]
-
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-icon">Q</div>
-          <div>
-            <h2>QUANT<span>-X</span></h2>
-            <small>INTELLIGENCE TERMINAL</small>
-          </div>
-        </div>
-
-        <div className="sidebar-label">WORKSPACE</div>
-        <nav>
-          {navItems.map(item => (
-            <button
-              key={item.name}
-              className={`nav-item ${activeNav === item.name ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.name)}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              {item.name}
-              {item.name === 'AI Signals' && <span className="nav-new">AI</span>}
-            </button>
-          ))}
-        </nav>
-
-        <div className="sidebar-label tools-label">SYSTEM</div>
-        <button className="nav-item"><span className="nav-icon">⚙</span> Settings</button>
-        <button className="nav-item"><span className="nav-icon">◈</span> Documentation</button>
-
-        <div className="sidebar-bottom">
-          <div className="status-indicator"><span /> SYSTEM ONLINE</div>
-          <div className="profile">
-            <div className="avatar">QX</div>
-            <div><strong>QUANT-X User</strong><small>Research Account</small></div>
-            <span className="profile-menu">•••</span>
-          </div>
-        </div>
-      </aside>
-
-      <main className="main-content">
-        <header className="topbar">
-          <div>
-            <div className="breadcrumb">WORKSPACE <span>/</span> {activeNav.toUpperCase()}</div>
-            <h1>{activeNav === 'Overview' ? 'Market Overview' : activeNav}</h1>
-          </div>
-          <div className="topbar-right">
-            <div className="connection"><span /> DEMO MODE</div>
-            <button className="icon-button" title="Notifications">♧</button>
-            <div className="top-avatar">Q</div>
-          </div>
-        </header>
-
-        <div className="dashboard">
-          <div className="welcome-row">
-            <div>
-              <h2>Market Intelligence <span className="sparkle">✳</span></h2>
-              <p>Track markets. Discover opportunities. Make data-driven decisions.</p>
-            </div>
-            <div className="market-switch">
-              <button className={market === 'INDIA' ? 'selected' : ''} onClick={() => setMarket('INDIA')}>🇮🇳 INDIA</button>
-              <button className={market === 'US' ? 'selected' : ''} onClick={() => setMarket('US')}>🇺🇸 UNITED STATES</button>
-            </div>
-          </div>
-
-          <div className="demo-notice">
-            <span>ⓘ</span> DEMONSTRATION DATA — Market prices and metrics below are illustrative, not live exchange data.
-          </div>
-
-          <section className="metric-grid">
-            <div className="metric-card">
-              <div className="metric-heading">MARKET INDEX <span>↗</span></div>
-              <div className="metric-value">{market === 'INDIA' ? '26,102.45' : '23,458.20'}</div>
-              <div className="metric-change positive">↑ 1.24% <span>Today</span></div>
-              <div className="metric-footer"> {market === 'INDIA' ? 'NIFTY 50' : 'NASDAQ 100'} </div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-heading">MARKET SENTIMENT <span>◉</span></div>
-              <div className="metric-value">Bullish</div>
-              <div className="sentiment-bar"><span /></div>
-              <div className="metric-footer">BUYING PRESSURE <strong>72%</strong></div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-heading">VOLUME TRADED <span>▥</span></div>
-              <div className="metric-value">{market === 'INDIA' ? '₹ 8.42B' : '$ 42.8B'}</div>
-              <div className="metric-change positive">↑ 8.6% <span>vs previous session</span></div>
-              <div className="metric-footer">TOTAL MARKET VOLUME</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-heading">AI CONFIDENCE <span>✳</span></div>
-              <div className="metric-value">87.4<span className="percent">%</span></div>
-              <div className="metric-change positive">High confidence</div>
-              <div className="metric-footer">ILLUSTRATIVE MODEL OUTPUT</div>
-            </div>
-          </section>
-
-          <section className="content-grid">
-            <div className="panel chart-panel">
-              <div className="panel-header">
-                <div>
-                  <div className="panel-eyebrow">MARKET PERFORMANCE</div>
-                  <h3>{market === 'INDIA' ? 'NIFTY 50' : 'NASDAQ 100'} <span className="live-dot" /></h3>
-                  <div className="chart-price">{market === 'INDIA' ? '26,102.45' : '23,458.20'} <span className="positive">+1.24%</span></div>
-                </div>
-                <div className="period-selector">
-                  {['1D', '1W', '1M', '3M', '1Y', 'ALL'].map(p => (
-                    <button key={p} className={period === p ? 'chosen' : ''} onClick={() => setPeriod(p)}>{p}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="chart-container">
-                <div className="chart-y-labels">
-                  <span>26,500</span><span>26,000</span><span>25,500</span><span>25,000</span><span>24,500</span>
-                </div>
-                <svg className="market-chart" viewBox="0 0 920 250" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#16c784" stopOpacity=".25" />
-                      <stop offset="100%" stopColor="#16c784" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  {[30, 80, 130, 180, 230].map(y => <line key={y} x1="0" y1={y} x2="920" y2={y} stroke="#202a35" strokeDasharray="4 6" />)}
-                  <polygon points={`0,250 ${chartPoints} 920,250`} fill="url(#chartFill)" />
-                  <polyline points={chartPoints} fill="none" stroke="#16c784" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                </svg>
-              </div>
-              <div className="chart-x-labels"><span>09:15</span><span>10:30</span><span>11:45</span><span>13:00</span><span>14:15</span><span>15:30</span></div>
-              <div className="chart-footer"><span><i className="legend-dot" /> INDEX PRICE</span><span>Illustrative chart · Not connected to an exchange</span></div>
-            </div>
-
-            <div className="panel ai-panel">
-              <div className="panel-header">
-                <div><div className="panel-eyebrow">MACHINE LEARNING</div><h3><span className="sparkle">✳</span> AI Insights</h3></div>
-                <span className="ai-badge">AI ENGINE</span>
-              </div>
-              <div className="ai-score">
-                <div className="score-ring"><div><strong>87</strong><small>/100</small></div></div>
-                <div><strong>Positive Outlook</strong><p>Illustrative market assessment</p></div>
-              </div>
-              <div className="insight-item"><span className="insight-icon green">↗</span><div><strong>Momentum</strong><p>Positive trend strength</p></div><b className="positive">Strong</b></div>
-              <div className="insight-item"><span className="insight-icon blue">⌁</span><div><strong>Volatility</strong><p>Illustrative risk estimate</p></div><b>Moderate</b></div>
-              <div className="insight-item"><span className="insight-icon purple">✳</span><div><strong>AI Signal</strong><p>Example model output</p></div><b className="positive">BUY</b></div>
-              <button className="full-button" onClick={() => setActiveNav('AI Signals')}>Explore AI Signals <span>→</span></button>
-            </div>
-          </section>
-
-          <section className="panel watchlist-panel">
-            <div className="panel-header watchlist-header">
-              <div><div className="panel-eyebrow">YOUR MARKET TRACKER</div><h3>Market Watchlist</h3></div>
-              <input className="search-input" placeholder="⌕  Search assets..." value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
-            <div className="stock-table">
-              <div className="stock-row stock-head"><span>ASSET</span><span>PRICE ({market === 'INDIA' ? 'INR' : 'USD'})</span><span>24H CHANGE</span><span>MARKET</span></div>
-              {filteredStocks.map(stock => (
-                <div className="stock-row" key={stock.symbol}>
-                  <div className="stock-name"><div className="stock-symbol">{stock.symbol.slice(0, 2)}</div><div><strong>{stock.symbol}</strong><small>{stock.name}</small></div></div>
-                  <strong>{market === 'INDIA' ? '₹' : '$'} {stock.price}</strong>
-                  <span className={stock.positive ? 'positive' : 'negative'}>{stock.change}</span>
-                  <span className="market-tag">{market}</span>
-                </div>
-              ))}
-              {filteredStocks.length === 0 && <div className="empty-state">No matching assets found.</div>}
-            </div>
-          </section>
-
-          <footer className="dashboard-footer">
-            <span>QUANT-X TERMINAL <span className="footer-separator">•</span> VERSION 1.0</span>
-            <span>EDUCATIONAL RESEARCH PLATFORM <span className="footer-separator">•</span> NOT FINANCIAL ADVICE</span>
-          </footer>
-        </div>
-      </main>
-    </div>
-  )
+type Market='INDIA'|'US'|'FOREX'
+type Asset={symbol:string;name:string}
+type Candle={timestamp:string;open:number;high:number;low:number;close:number;volume:number}
+type Order={id:number;symbol:string;market:string;side:string;quantity:number;price:number;created_at:string;status:string}
+const API=import.meta.env.VITE_API_URL||'http://localhost:8000'
+const nav=['Overview','Markets','AI Signals','Strategies','Backtesting','Paper Trading','Portfolio']
+const initial:Record<Market,Asset[]>={INDIA:[['RELIANCE','Reliance Industries'],['TCS','Tata Consultancy Services'],['HDFCBANK','HDFC Bank'],['INFY','Infosys'],['NIFTY50','NIFTY 50']].map(([symbol,name])=>({symbol,name})),US:[['AAPL','Apple'],['MSFT','Microsoft'],['NVDA','NVIDIA'],['AMZN','Amazon'],['SPY','S&P 500 ETF']].map(([symbol,name])=>({symbol,name})),FOREX:['EUR/USD','GBP/USD','USD/JPY','USD/CHF','AUD/USD','USD/CAD','NZD/USD','USD/INR','EUR/INR','GBP/INR'].map(symbol=>({symbol,name:symbol.replace('/',' / ')}))}
+function App(){
+ const [market,setMarket]=useState<Market>('INDIA'),[active,setActive]=useState('Overview'),[symbol,setSymbol]=useState('RELIANCE'),[search,setSearch]=useState('')
+ const [providers,setProviders]=useState<Record<string,{status:string;coverage?:string;provider?:string}>>({})
+ const [apiStatus,setApiStatus]=useState('Checking backend…'),[quote,setQuote]=useState<number|null>(null),[quoteError,setQuoteError]=useState('')
+ const [signal,setSignal]=useState<any>(null),[signalError,setSignalError]=useState('')
+ const [orders,setOrders]=useState<Order[]>([]),[quantity,setQuantity]=useState('1'),[price,setPrice]=useState(''),[orderMessage,setOrderMessage]=useState('')
+ const [candles,setCandles]=useState<Candle[]>([]),[backtest,setBacktest]=useState<any>(null),[backtestError,setBacktestError]=useState('')
+ const [fast,setFast]=useState('10'),[slow,setSlow]=useState('30')
+ const assets=initial[market],selected=assets.find(a=>a.symbol===symbol)||assets[0]
+ const filtered=useMemo(()=>assets.filter(a=>a.symbol.toLowerCase().includes(search.toLowerCase())||a.name.toLowerCase().includes(search.toLowerCase())),[assets,search,market])
+ async function refresh(){
+  try{const [p,m]=await Promise.all([fetch(API+'/api/providers'),fetch(API+'/api/markets')]);if(!p.ok||!m.ok)throw Error('API unavailable');setProviders(await p.json());setApiStatus('Backend connected')}
+  catch{setApiStatus('Backend disconnected · start FastAPI')}
+ }
+ async function loadOrders(){try{const r=await fetch(API+'/api/paper/orders');if(r.ok)setOrders(await r.json())}catch{/* offline */}}
+ async function loadQuote(){setQuote(null);setQuoteError('');try{const r=await fetch(`${API}/api/quote/${market}/${encodeURIComponent(symbol)}`);const d=await r.json();if(!r.ok)throw Error(d.detail||'Quote unavailable');setQuote(d.price)}catch(e){setQuoteError(e instanceof Error?e.message:'Quote unavailable')}}
+ async function loadSignal(){setSignal(null);setSignalError('');try{const r=await fetch(`${API}/api/signals/${market}/${encodeURIComponent(symbol)}`);const d=await r.json();if(!r.ok)throw Error(d.detail||'Signal unavailable');setSignal(d)}catch(e){setSignalError(e instanceof Error?e.message:'Signal unavailable')}}
+ async function loadCandles(){try{const r=await fetch(`${API}/api/history/${market}/${encodeURIComponent(symbol)}?interval=1day&outputsize=500`);const d=await r.json();if(!r.ok)throw Error(d.detail||'History unavailable');setCandles(d.data||[]);setBacktest(null);setBacktestError('')}catch(e){setCandles([]);setBacktestError(e instanceof Error?e.message:'History unavailable')}}
+ useEffect(()=>{refresh();loadOrders()},[])
+ useEffect(()=>{loadQuote();if(active==='AI Signals')loadSignal();if(active==='Backtesting')loadCandles()},[market,symbol,active])
+ async function submit(side:'BUY'|'SELL'){const p=Number(price||quote);if(!Number(quantity)||Number(quantity)<=0||!p||p<=0){setOrderMessage('Enter a valid quantity and price (or load a quote).');return}
+  try{const r=await fetch(API+'/api/paper/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol,market,side,quantity:Number(quantity),price:p})});const d=await r.json();if(!r.ok)throw Error(d.detail||'Order rejected');setOrderMessage(`Virtual paper order #${d.id} recorded`);loadOrders()}catch(e){setOrderMessage(e instanceof Error?e.message:'Order failed')}}
+ async function runBacktest(){setBacktestError('');try{const prices=candles.map(c=>c.close);const r=await fetch(API+'/api/backtest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prices,fast_period:Number(fast),slow_period:Number(slow),fee_bps:5})});const d=await r.json();if(!r.ok)throw Error(d.detail||'Backtest failed');setBacktest(d)}catch(e){setBacktestError(e instanceof Error?e.message:'Backtest failed')}}
+ return <div className="app-shell"><aside className="sidebar"><div className="brand"><div className="brand-icon">Q</div><div><h2>QUANT<span>-X</span></h2><small>INTELLIGENCE TERMINAL</small></div></div><div className="sidebar-label">WORKSPACE</div><nav>{nav.map((n,i)=><button key={n} className={`nav-item ${active===n?'active':''}`} onClick={()=>setActive(n)}><span className="nav-icon">{['◫','▥','✳','⌘','◷','⇄','◉'][i]}</span>{n}{n==='AI Signals'&&<span className="nav-new">AI</span>}</button>)}</nav><div className="sidebar-label tools-label">SYSTEM</div><button className="nav-item" onClick={refresh}><span className="nav-icon">↻</span>Refresh connections</button><div className="sidebar-bottom"><div className="status-indicator">{apiStatus}</div><div className="profile"><div className="avatar">QX</div><div><strong>QUANT-X User</strong><small>Research / Paper Account</small></div></div></div></aside>
+ <main className="main-content"><header className="topbar"><div><div className="breadcrumb">WORKSPACE <span>/</span> {active.toUpperCase()}</div><h1>{active==='Overview'?'Market Overview':active}</h1></div><div className="topbar-right"><div className="connection"><span/>{apiStatus.toUpperCase()}</div><button className="icon-button" onClick={refresh} title="Refresh">↻</button><div className="top-avatar">Q</div></div></header>
+ <div className="dashboard"><div className="welcome-row"><div><h2>Market Intelligence <span className="sparkle">✳</span></h2><p>India · US equities · Forex · Research and virtual execution</p></div><div className="market-switch">{(['INDIA','US','FOREX'] as Market[]).map(m=><button key={m} className={market===m?'selected':''} onClick={()=>{setMarket(m);setSymbol(initial[m][0].symbol)}}>{m==='INDIA'?'🇮🇳 INDIA':m==='US'?'🇺🇸 USA':'💱 FOREX'}</button>)}</div></div>
+ <div className="demo-notice">ⓘ No fabricated market prices, live badges, model confidence or headlines. Data appears only when the configured provider returns it. India requires an authorized vendor adapter.</div>
+ <section className="provider-grid">{Object.entries(providers).map(([k,p])=><div className="provider-card" key={k}><div className="provider-name">{k.replace('_',' ').toUpperCase()}</div><strong className={p.status==='CONFIGURED'?'positive':'negative'}>{p.status}</strong><small>{p.coverage||p.provider}</small></div>)}</section>
+ <section className="metric-grid"><div className="metric-card"><div className="metric-heading">SELECTED INSTRUMENT</div><div className="metric-value">{selected.symbol}</div><div className="metric-footer">{selected.name}</div></div><div className="metric-card"><div className="metric-heading">LATEST PROVIDER QUOTE</div><div className="metric-value">{quote===null?'—':quote.toLocaleString(undefined,{maximumFractionDigits:6})}</div><div className="metric-footer">{quoteError||'Provider response only'}</div></div><div className="metric-card"><div className="metric-heading">PAPER ORDERS</div><div className="metric-value">{orders.length}</div><div className="metric-footer">VIRTUAL ORDER LEDGER</div></div><div className="metric-card"><div className="metric-heading">HISTORICAL DATA</div><div className="metric-value">{candles.length||'—'}</div><div className="metric-footer">CANDLES LOADED FOR BACKTEST</div></div></section>
+ {(active==='Overview'||active==='Markets')&&<><section className="content-grid"><div className="panel watchlist-panel"><div className="panel-header watchlist-header"><div><div className="panel-eyebrow">INSTRUMENT SELECTOR</div><h3>Markets & Watchlist</h3></div><input className="search-input" placeholder="Search assets…" value={search} onChange={e=>setSearch(e.target.value)}/></div><div className="stock-table"><div className="stock-row stock-head"><span>ASSET</span><span>DESCRIPTION</span><span>SELECT</span></div>{filtered.map(a=><div className="stock-row" key={a.symbol}><div className="stock-name"><div className="stock-symbol">{a.symbol.slice(0,2)}</div><div><strong>{a.symbol}</strong><small>{a.name}</small></div></div><span>{a.name}</span><button className="select-asset" onClick={()=>setSymbol(a.symbol)}>{symbol===a.symbol?'Selected':'Open chart'}</button></div>)}</div></div><div className="panel ai-panel"><div className="panel-eyebrow">PROVIDER-VERIFIED DATA</div><h3>Selected asset</h3><p className="muted-copy">{selected.name} · {selected.symbol}</p><button className="full-button" onClick={loadQuote}>Refresh quote <span>↻</span></button><p className="error-text">{quoteError}</p></div></section><MarketChart market={market} symbol={symbol}/></>}
+ {active==='AI Signals'&&<><MarketChart market={market} symbol={symbol}/><section className="panel"><div className="panel-header"><div><div className="panel-eyebrow">TRANSPARENT TECHNICAL RULE</div><h3>Signal analysis · {symbol}</h3></div><button className="select-asset" onClick={loadSignal}>Calculate signal</button></div>{signal?<><div className="metric-value">{signal.signal}</div><p className="muted-copy">{signal.method}</p><div className="stock-row"><span>Fast SMA (10)</span><strong>{signal.fast_sma.toFixed(5)}</strong><span>Slow SMA (30): {signal.slow_sma.toFixed(5)}</span></div><div className="stock-row"><span>5-period momentum</span><strong>{signal.momentum_pct.toFixed(3)}%</strong><span>Confidence: not estimated</span></div></>:<p className="muted-copy">{signalError||'Select Calculate signal. Requires sufficient provider history.'}</p>}</section></>}
+ {active==='Strategies'&&<section className="panel"><div className="panel-eyebrow">STRATEGY RESEARCH</div><h3>Moving-average crossover template</h3><p className="muted-copy">A transparent long-only example. Configure the fast and slow windows, then test against actual historical candles in Backtesting. No strategy is assumed profitable.</p><div className="paper-controls"><label>Fast SMA<input type="number" min="2" max="100" value={fast} onChange={e=>setFast(e.target.value)}/></label><label>Slow SMA<input type="number" min="3" max="200" value={slow} onChange={e=>setSlow(e.target.value)}/></label><button className="select-asset" onClick={()=>setActive('Backtesting')}>Open backtesting →</button></div></section>}
+ {active==='Backtesting'&&<><section className="panel"><div className="panel-header"><div><div className="panel-eyebrow">HISTORICAL SIMULATION</div><h3>Simple SMA crossover · {symbol}</h3></div><button className="select-asset" onClick={loadCandles}>Load history</button></div><div className="paper-controls"><label>Fast SMA<input type="number" min="2" value={fast} onChange={e=>setFast(e.target.value)}/></label><label>Slow SMA<input type="number" min="3" value={slow} onChange={e=>setSlow(e.target.value)}/></label><button className="buy-button" onClick={runBacktest} disabled={!candles.length}>Run backtest</button></div><p className="muted-copy">{candles.length} historical candles available. Provider history is required; no sample prices are inserted.</p>{backtestError&&<p className="error-text">{backtestError}</p>}{backtest&&<div className="metric-grid"><div className="metric-card"><div className="metric-heading">STRATEGY RETURN</div><div className="metric-value">{backtest.return_pct.toFixed(2)}%</div></div><div className="metric-card"><div className="metric-heading">MAX DRAWDOWN</div><div className="metric-value">{backtest.max_drawdown_pct.toFixed(2)}%</div></div><div className="metric-card"><div className="metric-heading">TRADES</div><div className="metric-value">{backtest.trades}</div></div><div className="metric-card"><div className="metric-heading">FINAL EQUITY</div><div className="metric-value">{backtest.final_equity.toFixed(4)}</div></div></div>}</section><MarketChart market={market} symbol={symbol}/></>}
+ {active==='Paper Trading'&&<section className="panel"><div className="panel-eyebrow">SIMULATED EXECUTION ONLY</div><h3>Paper trading ticket</h3><p className="muted-copy">Orders are stored in a local SQLite virtual ledger. They are not sent to a broker or exchange.</p><div className="paper-controls"><label>Quantity<input type="number" min="0.0001" step="any" value={quantity} onChange={e=>setQuantity(e.target.value)}/></label><label>Price override<input type="number" min="0" step="any" value={price} onChange={e=>setPrice(e.target.value)} placeholder={quote?.toString()||'Load quote first'}/></label><button className="buy-button" onClick={()=>submit('BUY')}>Paper BUY</button><button className="sell-button" onClick={()=>submit('SELL')}>Paper SELL</button></div><p className="muted-copy">{orderMessage}</p><MarketChart market={market} symbol={symbol}/></section>}
+ {active==='Portfolio'&&<section className="panel"><div className="panel-eyebrow">VIRTUAL LEDGER</div><h3>Paper order history</h3><p className="muted-copy">Current ledger records; market valuation and realized P&L are not included.</p><div className="stock-row stock-head"><span>ASSET</span><span>MARKET</span><span>SIDE / QTY</span><span>PRICE</span></div>{orders.map(o=><div className="stock-row" key={o.id}><strong>{o.symbol}</strong><span>{o.market}</span><span>{o.side} / {o.quantity}</span><span>{o.price}</span></div>)}</section>}
+ <footer className="dashboard-footer"><span>QUANT-X TERMINAL · DEVELOPMENT BUILD</span><span>EDUCATIONAL RESEARCH · NOT FINANCIAL ADVICE</span></footer></div></main></div>
 }
-
 export default App
