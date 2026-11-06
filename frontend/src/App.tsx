@@ -114,12 +114,6 @@ type PaperPosition = {
   lastPrice: number
 }
 
-declare global {
-  interface Window {
-    TradingView?: any
-  }
-}
-
 const DEFAULT_API_PORT = import.meta.env.VITE_API_PORT || '8000'
 
 export function getApiBaseUrl(): string {
@@ -182,94 +176,6 @@ const CHART_MODES: Array<{ key: 'candles' | 'line' | 'area' | 'bar' | 'volume' |
 ]
 
 const compactNumber = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 })
-
-function mapTradingViewSymbol(symbol: string): string {
-  const upper = symbol.toUpperCase()
-  if (upper.endsWith('.NS')) {
-    const base = upper.replace(/\.NS$/, '')
-    return `NSE:${base}`
-  }
-  if (upper.includes('/')) {
-    const [left, right] = upper.split('/')
-    return `FX:${left}${right}`
-  }
-  if (upper.startsWith('^')) {
-    if (upper.includes('NSEI')) return 'NSE:NIFTY'
-    if (upper.includes('NSEBANK')) return 'NSE:BANKNIFTY'
-    if (upper.includes('BSESN')) return 'BSE:SENSEX'
-    if (upper.includes('GSPC')) return 'INDEXSP:INX'
-    if (upper.includes('IXIC')) return 'NASDAQ:IXIC'
-    if (upper.includes('DJI')) return 'INDEXDJX:.DJI'
-  }
-  if (upper === 'AAPL' || upper === 'MSFT' || upper === 'NVDA' || upper === 'AMZN' || upper === 'TSLA' || upper === 'META' || upper === 'GOOGL' || upper === 'NFLX') {
-    return `NASDAQ:${upper}`
-  }
-  return 'NASDAQ:AAPL'
-}
-
-function getAllowedTradingViewSymbols(): string[] {
-  return [
-    'NSE:RELIANCE',
-    'NSE:TCS',
-    'NSE:HDFCBANK',
-    'NASDAQ:AAPL',
-    'NASDAQ:MSFT',
-    'NASDAQ:NVDA',
-    'NASDAQ:AMZN',
-    'INDEXSP:INX',
-    'NASDAQ:IXIC',
-    'FX:EURUSD',
-    'FX:GBPUSD',
-    'FX:USDJPY',
-    'FX:USDINR',
-  ]
-}
-
-function mapTradingViewInterval(interval: string): string {
-  const map: Record<string, string> = {
-    '1m': '1',
-    '3m': '3',
-    '5m': '5',
-    '15m': '15',
-    '30m': '30',
-    '1h': '60',
-    '2h': '120',
-    '4h': '240',
-    '1d': 'D',
-    '1w': 'W',
-    '1mo': 'M',
-  }
-  return map[interval] ?? 'D'
-}
-
-function loadTradingViewScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') {
-      resolve()
-      return
-    }
-
-    if (window.TradingView) {
-      resolve()
-      return
-    }
-
-    const existing = document.getElementById('tradingview-script') as HTMLScriptElement | null
-    if (existing) {
-      existing.addEventListener('load', () => resolve(), { once: true })
-      existing.addEventListener('error', () => reject(new Error('TradingView script failed to load')), { once: true })
-      return
-    }
-
-    const script = document.createElement('script')
-    script.id = 'tradingview-script'
-    script.src = 'https://s3.tradingview.com/tv.js'
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('TradingView script failed to load'))
-    document.body.appendChild(script)
-  })
-}
 
 function formatVolume(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) return '—'
