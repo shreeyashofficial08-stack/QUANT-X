@@ -733,135 +733,58 @@ function App() {
     const container = chartContainerRef.current
     if (!container) return
 
-    const cleanup = () => {
-      container.innerHTML = ''
-      chartInstanceRef.current = null
+    if (!chartCandles.length) {
+      container.innerHTML = '<div class="chart-empty-state">Waiting for historical candle data…</div>'
+      return () => { container.innerHTML = '' }
     }
 
-    const drawFallbackChart = () => {
-      if (!chartCandles.length) return
+    const chart = createChart(container, {
+      layout: { background: { type: ColorType.Solid, color: '#0b1220' }, textColor: '#d7e3f0' },
+      grid: { vertLines: { color: '#20304a' }, horzLines: { color: '#20304a' } },
+      crosshair: { mode: CrosshairMode.Normal },
+      rightPriceScale: { borderColor: '#20304a' },
+      timeScale: { borderColor: '#20304a', timeVisible: true, secondsVisible: false },
+      width: Math.max(container.clientWidth, 300),
+      height: 320,
+    })
+    chartInstanceRef.current = chart
+    const viewData = chartType === 'heikin_ashi' ? toHeikinAshiCandles(chartCandles) : chartCandles
 
-      const chart = createChart(container, {
-        layout: {
-          background: { type: ColorType.Solid, color: '#0b1220' },
-          textColor: '#d7e3f0',
-        },
-        grid: {
-          vertLines: { color: '#20304a' },
-          horzLines: { color: '#20304a' },
-        },
-        crosshair: { mode: CrosshairMode.Normal },
-        rightPriceScale: { borderColor: '#20304a' },
-        timeScale: { borderColor: '#20304a', timeVisible: true, secondsVisible: false },
-        width: container.clientWidth,
-        height: 320,
+    if (chartType === 'candles' || chartType === 'heikin_ashi') {
+      const series = chart.addSeries(CandlestickSeries, {
+        upColor: '#1bd27a', downColor: '#ef4444', borderVisible: false,
+        wickUpColor: '#1bd27a', wickDownColor: '#ef4444',
       })
-
-      chartInstanceRef.current = chart
-      const viewData = chartType === 'heikin_ashi' ? toHeikinAshiCandles(chartCandles) : chartCandles
-
-      if (chartType === 'candles' || chartType === 'heikin_ashi') {
-        const candleSeries = chart.addSeries(CandlestickSeries, {
-          upColor: '#1bd27a',
-          downColor: '#ef4444',
-          borderVisible: false,
-          wickUpColor: '#1bd27a',
-          wickDownColor: '#ef4444',
-        })
-        candleSeries.setData(viewData.map((candle) => ({ time: candle.time as any, open: candle.open, high: candle.high, low: candle.low, close: candle.close })))
-      }
-
-      if (chartType === 'line' || chartType === 'area') {
-        const baseSeries = chart.addSeries(chartType === 'area' ? AreaSeries : LineSeries, {
-          lineColor: '#38bdf8',
-          topColor: 'rgba(56,189,248,0.35)',
-          bottomColor: 'rgba(56,189,248,0.06)',
-          lineWidth: 2,
-        })
-        baseSeries.setData(viewData.map((candle) => ({ time: candle.time as any, value: candle.close })))
-      }
-
-      if (chartType === 'bar') {
-        const barSeries = chart.addSeries(BarSeries, {
-          upColor: '#1bd27a',
-          downColor: '#ef4444',
-        })
-        barSeries.setData(viewData.map((candle) => ({ time: candle.time as any, open: candle.open, high: candle.high, low: candle.low, close: candle.close })))
-      }
-
-      if (chartType === 'volume') {
-        const volumeSeries = chart.addSeries(HistogramSeries, {
-          priceFormat: { type: 'volume' },
-          priceScaleId: '',
-          color: '#2dd4bf',
-        })
-        volumeSeries.setData(viewData.map((candle) => ({ time: candle.time as any, value: candle.volume, color: candle.close >= candle.open ? '#1bd27a' : '#ef4444' })))
-      }
-
-      if (indicatorSeries.length && chartType !== 'volume') {
-        const overlay = chart.addSeries(LineSeries, { color: '#fbbf24', lineWidth: 2 })
-        overlay.setData(indicatorSeries.map((point) => ({ time: point.time as any, value: point.value })))
-      }
-
-      chart.timeScale().fitContent()
-      const resizeObserver = new ResizeObserver(() => {
-        chart.applyOptions({ width: container.clientWidth })
+      series.setData(viewData.map((candle) => ({ time: candle.time as any, open: candle.open, high: candle.high, low: candle.low, close: candle.close })))
+    } else if (chartType === 'line' || chartType === 'area') {
+      const series = chart.addSeries(chartType === 'area' ? AreaSeries : LineSeries, {
+        lineColor: '#38bdf8', topColor: 'rgba(56,189,248,0.35)',
+        bottomColor: 'rgba(56,189,248,0.06)', lineWidth: 2,
       })
-      resizeObserver.observe(container)
-
-      return () => {
-        resizeObserver.disconnect()
-        chart.remove()
-      }
+      series.setData(viewData.map((candle) => ({ time: candle.time as any, value: candle.close })))
+    } else if (chartType === 'bar') {
+      const series = chart.addSeries(BarSeries, { upColor: '#1bd27a', downColor: '#ef4444' })
+      series.setData(viewData.map((candle) => ({ time: candle.time as any, open: candle.open, high: candle.high, low: candle.low, close: candle.close })))
+    } else {
+      const series = chart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' }, priceScaleId: '', color: '#2dd4bf' })
+      series.setData(viewData.map((candle) => ({ time: candle.time as any, value: candle.volume, color: candle.close >= candle.open ? '#1bd27a' : '#ef4444' })))
     }
 
-    cleanup()
-
-    const renderTradingView = async () => {
-      try {
-        await loadTradingViewScript()
-        if (!container || !window.TradingView) {
-          throw new Error('TradingView unavailable')
-        }
-
-        const containerId = `tradingview-${Date.now()}`
-        container.id = containerId
-        container.innerHTML = ''
-
-          const allowed = getAllowedTradingViewSymbols()
-        const mappedSymbol = mapTradingViewSymbol(selectedSymbol)
-        const symbol = allowed.includes(mappedSymbol) ? mappedSymbol : allowed[0]
-
-        const widget = new window.TradingView.widget({
-          autosize: true,
-          symbol,
-          interval: mapTradingViewInterval(chartInterval),
-          timezone: 'Etc/UTC',
-          theme: 'Light',
-          style: '1',
-          locale: 'en',
-          enable_publishing: false,
-          hide_side_toolbar: false,
-          allow_symbol_change: false,
-          save_image: false,
-          details: false,
-          container_id: containerId,
-        })
-        chartInstanceRef.current = widget
-      } catch {
-        try {
-          drawFallbackChart()
-        } catch {
-          container.innerHTML = '<div class="chart-empty-state">Unable to render chart.</div>'
-        }
-      }
+    if (indicatorSeries.length && chartType !== 'volume') {
+      const overlay = chart.addSeries(LineSeries, { color: '#fbbf24', lineWidth: 2 })
+      overlay.setData(indicatorSeries.map((point) => ({ time: point.time as any, value: point.value })))
     }
 
-    void renderTradingView()
+    chart.timeScale().fitContent()
+    const resizeObserver = new ResizeObserver(() => chart.applyOptions({ width: Math.max(container.clientWidth, 300) }))
+    resizeObserver.observe(container)
+
     return () => {
-      cleanup()
+      resizeObserver.disconnect()
+      chart.remove()
+      if (chartInstanceRef.current === chart) chartInstanceRef.current = null
     }
-  }, [chartCandles, chartInterval, chartType, indicatorSeries, selectedSymbol])
+  }, [chartCandles, chartType, indicatorSeries])
 
   const topMovers = useMemo(() => {
     if (!marketCatalog) return { gainers: [], losers: [] }
