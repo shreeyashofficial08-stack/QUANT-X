@@ -129,9 +129,16 @@ export function getApiBaseUrl(): string {
   const normalizedHost = hostname || 'localhost'
 
   if (normalizedHost.includes('.app.github.dev') || normalizedHost.includes('.github.dev')) {
-    const codespaceMatch = normalizedHost.match(/^(\d+)-(.+\.(?:app\.)?github\.dev)$/i)
-    if (codespaceMatch) {
-      return `${protocol}//${DEFAULT_API_PORT}-${codespaceMatch[2]}`
+    // Modern Codespaces URLs use: <codespace-name>-<port>.app.github.dev
+    const modernCodespaceMatch = normalizedHost.match(/^(.+)-(\d+)(\.app\.github\.dev)$/i)
+    if (modernCodespaceMatch) {
+      return `${protocol}//${modernCodespaceMatch[1]}-${DEFAULT_API_PORT}${modernCodespaceMatch[3]}`
+    }
+
+    // Retain support for legacy port-first Codespaces hostnames.
+    const legacyCodespaceMatch = normalizedHost.match(/^(\d+)-(.+\.(?:app\.)?github\.dev)$/i)
+    if (legacyCodespaceMatch) {
+      return `${protocol}//${DEFAULT_API_PORT}-${legacyCodespaceMatch[2]}`
     }
     return `${protocol}//${normalizedHost}`
   }
